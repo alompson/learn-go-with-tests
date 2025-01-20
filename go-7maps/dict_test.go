@@ -29,20 +29,82 @@ func TestSearch(t *testing.T){
 }
 
 func TestAdd(t *testing.T){
-	dict := Dict{}
-	word := "paulistano"
-	def := "ser estranho de dialetos desconhecidos"
+	t.Run("New word", func (t *testing.T){
+		dict := Dict{}
+		word := "paulistano"
+		def := "ser estranho de dialetos desconhecidos"
+	
+		err := dict.Add(word, def)
 
-	dict.Add(word, def)
+		assertError(t, err, nil)
+		assertDefinition(t, dict, word, def)
 
-	assertDefinition(t, dict, word, def)
+	})
+
+	t.Run("Existing word", func (t *testing.T){
+		word := "test"
+		def := "this is just a test"
+		dict := Dict{word: def}
+
+		err := dict.Add(word, "new test")
+
+		assertError(t, err, ErrWordExists)
+		assertDefinition(t, dict, word, def)
+
+	})
+
+}
+
+func TestUpdate(t *testing.T) {
+	t.Run("existing word", func(t *testing.T){
+		word := "test"
+		def := "this is a test"
+		dict := Dict{word: def}
+	
+		newDef := "a new test!"
+	
+		err := dict.Update(word, newDef)
+		assertError(t, err, nil)
+		assertDefinition(t, dict, word, newDef)
+	})
+
+	t.Run("new word", func(t *testing.T){
+		dict := Dict{}
+		word := "test"
+		def := "this is a test"
+
+		err := dict.Update(word, def)
+		assertError(t, err, ErrWordDoesNotExist)
+	})
+
+}
+
+func TestDelete(t *testing.T){
+	t.Run("existing word", func(t *testing.T){
+		word := "test"
+		def := "this is a test"
+		dict := Dict{word: def}
+
+		dict.Delete(word)
+		_, err := dict.Search(word)
+		assertError(t, err, ErrNotFound)
+	})
+
+	t.Run("new word", func(t *testing.T){
+		dict := Dict{}
+		word := "test"
+
+		err := dict.Delete(word)
+		assertError(t, err, ErrWordDoesNotExist)
+	})
 }
 
 func assertDefinition(t testing.TB, dict Dict, word, def string) {
+	t.Helper()
 	got, err := dict.Search(word)
 
 	if err != nil{
-		t.Fatal("Should find Paulistano:", err)
+		t.Fatal("Should find word:", err)
 	}
 
 	assertStrings(t, got, def)
@@ -63,3 +125,4 @@ func assertError(t testing.TB, got, want error){
 		t.Errorf("got error %q want %q", got, want)
 	}
 }
+
